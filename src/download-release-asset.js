@@ -48,8 +48,15 @@ async function run() {
       if (re.test(a.name)) {
         assets.push(a);
       }
+      else {
+        core.info('Ignoring ' + a.name);
+      }
     }
 
+    if (assets.length === 0) {
+      core.warning('No matching assets in release!');
+    }
+    
     // Download assets
     headers = {
       Accept: 'application/octet-stream',
@@ -58,6 +65,7 @@ async function run() {
       headers.Authorization = 'token ' + token;
     }
     for (let a of assets) {
+      core.info('Downloading asset: ' + a.name);
       axios({
         method: 'get',
         url: a.url,
