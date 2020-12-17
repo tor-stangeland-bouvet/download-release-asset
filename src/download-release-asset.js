@@ -49,12 +49,12 @@ async function run() {
         assets.push(a);
       }
       else {
-        core.info('Ignoring ' + a.name);
+        console.log('Ignoring ' + a.name);
       }
     }
 
     if (assets.length === 0) {
-      core.warning('No matching assets in release!');
+      console.warn('No matching assets in release!');
     }
     
     // Download assets
@@ -65,14 +65,16 @@ async function run() {
       headers.Authorization = 'token ' + token;
     }
     for (let a of assets) {
-      core.info('Downloading asset: ' + a.name);
+      console.log('Downloading asset: ' + a.name);
       axios({
         method: 'get',
         url: a.url,
         headers: headers,
         responseType: 'stream',
       }).then(resp => {
+        console.log('Writing ' + a.name + '...');
         resp.data.pipe(fs.createWriteStream(a.name));
+        console.log('Download of ' + a.name + ' completed.');
       });
     }
   } catch (error) {
