@@ -1,6 +1,5 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
-const fs = require('fs');
+const fs  = require('fs');
 const axios = require('axios').default;
 
 async function run() {
@@ -66,16 +65,34 @@ async function run() {
     }
     for (let a of assets) {
       console.log('Downloading asset: ' + a.name);
-      axios({
+      resp = await axios({
         method: 'get',
         url: a.url,
         headers: headers,
+        maxRedirects: 0,
         responseType: 'stream',
-      }).then(resp => {
-        console.log('Writing ' + a.name + '...');
-        resp.data.pipe(fs.createWriteStream(a.name));
-        console.log('Download of ' + a.name + ' completed.');
+      }).catch(error => {
+        if (error.isAxiosError && error.response.status==302) {
+          return error.response
+        }
+
+        throw error;
       });
+
+      if (resp.status==302) {
+        console.log('Redirected to ' + resp.headers.location);
+        resp = await axios({
+          method: 'get',
+          url: resp.headers.location,
+          //headers: headers,
+          maxRedirects: 0,
+          responseType: 'stream',
+        });
+      }
+
+      console.log('Writing ' + a.name + '...');
+      resp.data.pipe(fs.createWriteStream(a.name));
+      console.log('Download of ' + a.name + ' completed.');
     }
   } catch (error) {
     core.setFailed(error.message);
